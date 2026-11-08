@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: spidi-orchestrator-backend
+  profiles:
+    active: local
+  jpa:
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+# Configuración de OpenAPI / Swagger UI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    enabled: true
+
+# Parámetros del Orquestador Spidi
+spidi:
+  exchange-rate:
+    default-usd-ves: 45.50
+    cache-ttl-minutes: 60
+  p2c:
+    bank-code: "0137" # Banco Sofitasa / Aliado
+    bank-name: "Banco Sofitasa"
+    merchant-national-id: "J-501234567"
+    merchant-phone: "04141234567"
+    merchant-account: "01370001010000123456"
+  webhooks:
+    retry-attempts: 3
+    retry-delay-seconds: 10
+    timeout-ms: 5000
+
+server:
+  port: 8080

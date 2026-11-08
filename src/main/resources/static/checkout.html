@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spidi Checkout Unificado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Navbar -->
+    <header class="border-b border-slate-800 bg-slate-950/60 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-indigo-500/20">
+                    S
+                </div>
+                <div>
+                    <h1 class="font-bold text-base tracking-tight text-white flex items-center gap-2">
+                        SPIDI <span class="text-[10px] font-semibold uppercase bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full">Orquestador MVP</span>
+                    </h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/swagger-ui.html" target="_blank" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium bg-indigo-950/60 border border-indigo-800/50 px-3 py-1.5 rounded-lg transition">
+                    Swagger API Docs &rarr;
+                </a>
+                <span class="inline-flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2.5 py-1 rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Seguro SSL 256-bit
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block animate-spin w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full mb-3"></div>
+            <p class="text-slate-400 text-sm">Cargando pasarela de pago segura...</p>
+        </div>
+
+        <div id="checkoutCard" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Resumen de Orden (Izquierda) -->
+            <div class="lg:col-span-5 bg-slate-950/70 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-12 -top-12 w-32 h-32 bg-indigo-600/10 rounded-full blur-2xl"></div>
+                
+                <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Comercio</div>
+                <h2 id="merchantName" class="text-xl font-bold text-white mb-4">Cargando comercio...</h2>
+
+                <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-4 mb-5">
+                    <div class="text-xs text-slate-400 mb-1">Concepto</div>
+                    <div id="paymentDesc" class="text-sm font-medium text-slate-200">Suscripción digital</div>
+                </div>
+
+                <div class="border-t border-slate-800/80 pt-4 mb-4">
+                    <div class="flex justify-between items-baseline mb-2">
+                        <span class="text-sm text-slate-400">Total a Pagar (USD)</span>
+                        <span id="amountUsd" class="text-2xl font-extrabold text-white">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-baseline text-xs text-slate-400">
+                        <span>Equivalente en Bolívares (VES)</span>
+                        <span id="amountVes" class="font-semibold text-emerald-400 text-sm">Bs. 0,00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] text-slate-500 mt-2">
+                        <span>Tasa Oficial BCV</span>
+                        <span id="exchangeRate" class="font-mono">Bs. 0,00 / USD</span>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-950/30 border border-indigo-800/40 rounded-xl p-3 text-xs text-indigo-300 flex items-start gap-2.5">
+                    <svg class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span><strong>Spidi Conciliación en Tiempo Real:</strong> Tu pago se verifica al instante. Olvídate de enviar captures de pantalla.</span>
+                </div>
+            </div>
+
+            <!-- Selector de Métodos y Formularios (Derecha) -->
+            <div class="lg:col-span-7 bg-slate-950/70 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-3">Selecciona tu método de pago</div>
+
+                <!-- Tabs -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+                    <button type="button" onclick="selectTab('c2p')" id="tab-c2p" class="tab-btn px-3 py-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        Pago Móvil C2P
+                    </button>
+                    <button type="button" onclick="selectTab('p2c')" id="tab-p2c" class="tab-btn px-3 py-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        P2C Conciliado
+                    </button>
+                    <button type="button" onclick="selectTab('crypto')" id="tab-crypto" class="tab-btn px-3 py-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Cripto USDT
+                    </button>
+                    <button type="button" onclick="selectTab('card')" id="tab-card" class="tab-btn px-3 py-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        Tarjeta
+                    </button>
+                </div>
+
+                <!-- FORMULARIO 1: PAGO MÓVIL C2P (Débito con OTP) -->
+                <div id="panel-c2p" class="tab-panel space-y-4">
+                    <div class="bg-indigo-950/20 border border-indigo-900/30 p-3 rounded-xl text-xs text-indigo-300">
+                        <strong>Débito Inmediato C2P:</strong> Ingresa tu clave dinámica (OTP) obtenida por SMS o en la app de tu banco. El débito se realiza en 2 segundos.
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Banco Emisor</label>
+                            <select id="c2pBankCode" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                                <option value="0102">0102 - Banco de Venezuela</option>
+                                <option value="0105">0105 - Banco Mercantil</option>
+                                <option value="0134">0134 - Banesco</option>
+                                <option value="0108">0108 - Banco Provincial</option>
+                                <option value="0137" selected>0137 - Banco Sofitasa</option>
+                                <option value="0172">0172 - Bancamiga</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Cédula / RIF</label>
+                            <input type="text" id="c2pNationalId" value="V12345678" placeholder="V12345678" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Teléfono</label>
+                            <input type="text" id="c2pPhone" value="04141234567" placeholder="04141234567" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Clave Dinámica (OTP)</label>
+                            <input type="text" id="c2pOtp" value="849201" placeholder="Ej. 849201" maxlength="8" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold tracking-widest text-indigo-400 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <button type="button" onclick="confirmC2P()" class="w-full mt-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
+                        <span>Pagar con Débito C2P</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                </div>
+
+                <!-- FORMULARIO 2: PAGO MÓVIL P2C (Conciliación Automática) -->
+                <div id="panel-p2c" class="tab-panel hidden space-y-4">
+                    <div class="bg-emerald-950/20 border border-emerald-900/30 p-3 rounded-xl text-xs text-emerald-300">
+                        <strong>Datos para realizar tu Pago Móvil:</strong>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs space-y-1.5 font-mono">
+                        <div class="flex justify-between"><span class="text-slate-400">Banco:</span> <span class="text-white font-semibold">0137 - Banco Sofitasa</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">RIF Comercio:</span> <span class="text-white font-semibold">J-501234567</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Teléfono:</span> <span class="text-white font-semibold">04141234567</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Monto Exacto:</span> <span id="p2cAmountVes" class="text-emerald-400 font-bold">Bs. 0,00</span></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Número de Referencia Bancaria</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="p2cRefInput" placeholder="Ej. 98273615" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500">
+                            <button type="button" onclick="confirmP2C()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-xl text-xs transition">
+                                Conciliar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sandbox Simulator Helper -->
+                    <div class="mt-4 pt-4 border-t border-slate-800">
+                        <div class="text-[11px] text-slate-400 mb-2 font-medium">⚡ Modo Pruebas Desarrollador:</div>
+                        <button type="button" onclick="simulateBankPush()" class="w-full bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-medium py-2 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                            <span>Simular notificación bancaria instantánea</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FORMULARIO 3: CRIPTO USDT -->
+                <div id="panel-crypto" class="tab-panel hidden space-y-4">
+                    <div class="bg-violet-950/20 border border-violet-900/30 p-3 rounded-xl text-xs text-violet-300">
+                        Transfiere el monto exacto por la red <strong>TRON (TRC-20)</strong>.
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">Monto USDT:</span>
+                            <span id="cryptoAmount" class="font-bold text-white text-sm">0.00 USDT</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[11px] block mb-1">Dirección de depósito TRC-20:</span>
+                            <div class="bg-slate-950 px-2.5 py-1.5 rounded font-mono text-[11px] text-violet-400 break-all select-all border border-slate-800">
+                                TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6tSpidi
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Hash de la transacción (TxID)</label>
+                        <input type="text" id="cryptoTxHash" value="0x78a9c1482910fa291b" placeholder="0x..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-violet-500">
+                    </div>
+                    <button type="button" onclick="confirmCrypto()" class="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition shadow-lg shadow-violet-600/30">
+                        Confirmar Pago Cripto
+                    </button>
+                </div>
+
+                <!-- FORMULARIO 4: TARJETA -->
+                <div id="panel-card" class="tab-panel hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Número de Tarjeta</label>
+                        <input type="text" id="cardNumber" value="4532 0123 4567 8910" placeholder="0000 0000 0000 0000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Vencimiento (MM/AA)</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="cardMonth" value="12" min="1" max="12" placeholder="12" class="w-1/2 bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-center text-white focus:outline-none focus:border-indigo-500">
+                                <input type="number" id="cardYear" value="2028" min="2024" max="2035" placeholder="2028" class="w-1/2 bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-center text-white focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">CVV</label>
+                            <input type="password" id="cardCvv" value="123" maxlength="4" placeholder="123" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-center font-mono text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <button type="button" onclick="confirmCard()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition shadow-lg shadow-indigo-600/30">
+                        Pagar con Tarjeta
+                    </button>
+                </div>
+
+                <!-- Feedback / Status Alerts -->
+                <div id="statusMessage" class="hidden mt-4 p-3 rounded-xl text-xs font-medium"></div>
+
+            </div>
+        </div>
+
+        <!-- Pantalla de Éxito / Confirmación -->
+        <div id="successCard" class="hidden max-w-md mx-auto bg-slate-950/80 border border-emerald-500/30 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden">
+            <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-1">¡Pago Aprobado!</h2>
+            <p class="text-slate-400 text-xs mb-6">Conciliado con éxito en la plataforma Spidi.</p>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs space-y-2 mb-6 font-mono">
+                <div class="flex justify-between"><span class="text-slate-400">Referencia:</span> <span id="successRef" class="text-emerald-400 font-bold">C2P-781921</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Monto:</span> <span id="successAmount" class="text-white font-bold">$0.00</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Estado:</span> <span class="text-emerald-400 font-bold">SUCCEEDED</span></div>
+            </div>
+
+            <button type="button" onclick="location.reload()" class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition">
+                Nueva Consulta
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
+        Spidi Orchestrator MVP &bull; Orquestador de Pagos y Cobranzas Digitales &bull; Kotlin + Spring Boot + PostgreSQL + Redis
+    </footer>
+
+    <script>
+        const pathSegments = window.location.pathname.split('/');
+        const paymentId = pathSegments[pathSegments.length - 1];
+        let currentPayment = null;
+
+        async function loadPayment() {
+            try {
+                const res = await fetch(`/api/v1/checkout/${paymentId}`);
+                if (!res.ok) throw new Error("Pago no encontrado");
+                currentPayment = await res.json();
+
+                document.getElementById('loading').classList.add('hidden');
+
+                if (currentPayment.status === 'SUCCEEDED') {
+                    showSuccess(currentPayment.providerReference, currentPayment.amount, currentPayment.currency);
+                    return;
+                }
+
+                document.getElementById('checkoutCard').classList.remove('hidden');
+                document.getElementById('merchantName').textContent = currentPayment.merchantName;
+                document.getElementById('paymentDesc').textContent = currentPayment.description || "Cobro digital unificado";
+                document.getElementById('amountUsd').textContent = `$${Number(currentPayment.amount).toFixed(2)} ${currentPayment.currency}`;
+                document.getElementById('amountVes').textContent = `Bs. ${Number(currentPayment.amountVes).toLocaleString('es-VE', {minimumFractionDigits: 2})}`;
+                document.getElementById('p2cAmountVes').textContent = `Bs. ${Number(currentPayment.amountVes).toLocaleString('es-VE', {minimumFractionDigits: 2})}`;
+                document.getElementById('cryptoAmount').textContent = `${Number(currentPayment.amount).toFixed(2)} USDT`;
+                document.getElementById('exchangeRate').textContent = `Bs. ${Number(currentPayment.exchangeRate).toFixed(2)} / USD`;
+
+                if (currentPayment.customerPhone) document.getElementById('c2pPhone').value = currentPayment.customerPhone;
+                if (currentPayment.customerNationalId) document.getElementById('c2pNationalId').value = currentPayment.customerNationalId;
+                if (currentPayment.customerBankCode) document.getElementById('c2pBankCode').value = currentPayment.customerBankCode;
+
+            } catch (err) {
+                document.getElementById('loading').innerHTML = `
+                    <div class="max-w-md mx-auto bg-red-950/30 border border-red-800/50 p-6 rounded-2xl">
+                        <div class="text-red-400 font-bold mb-2">Error al cargar cobro</div>
+                        <div class="text-slate-400 text-xs">${err.message}</div>
+                        <div class="mt-4"><a href="/swagger-ui.html" class="text-indigo-400 underline text-xs">Crear un pago desde Swagger UI</a></div>
+                    </div>
+                `;
+            }
+        }
+
+        function selectTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-3 py-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200";
+            });
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+
+            const selectedBtn = document.getElementById(`tab-${tab}`);
+            const selectedPanel = document.getElementById(`panel-${tab}`);
+            if (selectedBtn) selectedBtn.className = "tab-btn px-3 py-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20";
+            if (selectedPanel) selectedPanel.classList.remove('hidden');
+        }
+
+        async function confirmC2P() {
+            const otp = document.getElementById('c2pOtp').value;
+            const bankCode = document.getElementById('c2pBankCode').value;
+            await postConfirm({ otp, bankCode });
+        }
+
+        async function confirmP2C() {
+            const reference = document.getElementById('p2cRefInput').value;
+            if (!reference) {
+                showNotice("Por favor ingresa la referencia bancaria", false);
+                return;
+            }
+            await postConfirm({ reference });
+        }
+
+        async function confirmCrypto() {
+            const txHash = document.getElementById('cryptoTxHash').value;
+            await postConfirm({ txHash });
+        }
+
+        async function confirmCard() {
+            const cardNumber = document.getElementById('cardNumber').value;
+            const expMonth = parseInt(document.getElementById('cardMonth').value);
+            const expYear = parseInt(document.getElementById('cardYear').value);
+            const cvv = document.getElementById('cardCvv').value;
+            await postConfirm({ cardNumber, expMonth, expYear, cvv });
+        }
+
+        async function simulateBankPush() {
+            try {
+                showNotice("Simulando emisión de transferencia bancaria...", true);
+                const randomRef = Math.floor(10000000 + Math.random() * 90000000).toString();
+                const res = await fetch('/api/v1/bank-notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        bankCode: "0137",
+                        reference: randomRef,
+                        amount: currentPayment.amountVes,
+                        senderPhone: currentPayment.customerPhone || "04141234567",
+                        senderNationalId: currentPayment.customerNationalId || "V12345678"
+                    })
+                });
+                const data = await res.json();
+                if (data.matched) {
+                    showSuccess(data.reference, currentPayment.amount, currentPayment.currency);
+                } else {
+                    showNotice("Transferencia registrada. Ingrese la referencia " + randomRef + " en el campo superior.", true);
+                    document.getElementById('p2cRefInput').value = randomRef;
+                }
+            } catch (err) {
+                showNotice("Error al simular transferencia: " + err.message, false);
+            }
+        }
+
+        async function postConfirm(payload) {
+            try {
+                showNotice("Procesando pago con el orquestador...", true);
+                const res = await fetch(`/api/v1/payments/${paymentId}/confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.status === 'SUCCEEDED') {
+                    showSuccess(data.providerReference, data.amount, data.currency);
+                } else if (data.status === 'FAILED') {
+                    showNotice("Pago Rechazado: " + (data.failureReason || "Error en transacción"), false);
+                } else {
+                    showNotice("Pago en proceso de conciliación (" + data.status + "). Esperando confirmación bancaria.", true);
+                }
+            } catch (err) {
+                showNotice("Error procesando pago: " + err.message, false);
+            }
+        }
+
+        function showNotice(msg, isInfo) {
+            const el = document.getElementById('statusMessage');
+            el.className = `mt-4 p-3 rounded-xl text-xs font-medium ${isInfo ? 'bg-indigo-950/60 border border-indigo-800 text-indigo-300' : 'bg-red-950/60 border border-red-800 text-red-300'}`;
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function showSuccess(ref, amount, currency) {
+            document.getElementById('checkoutCard').classList.add('hidden');
+            document.getElementById('successCard').classList.remove('hidden');
+            document.getElementById('successRef').textContent = ref || "REF-OK";
+            document.getElementById('successAmount').textContent = `$${Number(amount).toFixed(2)} ${currency}`;
+        }
+
+        loadPayment();
+    </script>
+</body>
+</html>

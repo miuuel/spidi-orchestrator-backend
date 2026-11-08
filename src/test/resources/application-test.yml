@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:spidi_test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+spidi:
+  exchange-rate:
+    default-usd-ves: 45.50
+    cache-ttl-minutes: 60
+  p2c:
+    bank-code: "0137"
+    bank-name: "Banco Sofitasa"
+    merchant-national-id: "J-501234567"
+    merchant-phone: "04141234567"

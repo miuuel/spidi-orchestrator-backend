@@ -1,0 +1,22 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:postgresql://localhost:5432/spidi_db
+    driver-class-name: org.postgresql.Driver
+    username: spidi_user
+    password: spidi_password
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3000ms
+
+logging:
+  level:
+    com.spidi: INFO

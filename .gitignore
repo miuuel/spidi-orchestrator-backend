@@ -1,0 +1,28 @@
+# Build output
+target/
+*.class
+
+# Kotlin
+.kotlin/
+
+# IDE / Editors
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.vscode/
+*.swp
+*.bak
+
+# Log files
+*.log
+logs/
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Docker volume data (if mounted locally)
+postgres_data/
+redis_data/
